@@ -9,10 +9,19 @@ export default defineConfig({
     svgr({
       svgrOptions: {
         icon: true,
-        // This will transform your SVG to a React component
         exportType: "named",
         namedExport: "ReactComponent",
       },
     }),
   ],
+  server: {
+    proxy: {
+      // This tells Vite: "If the URL starts with /api, send it to the backend IP"
+      '/api': {
+        target: 'http://192.168.1.10:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });
