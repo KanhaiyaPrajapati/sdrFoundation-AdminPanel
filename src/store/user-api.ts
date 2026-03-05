@@ -3,24 +3,20 @@ import axios from "axios";
 const BASE_URL = "http://localhost:5000/api/users";
 
 export interface User {
-  id?: string;
-  name: string;
+  id: number;
+  full_name: string;
   email: string;
-  phone?: string;
-  address?: string;
-  status?: "active" | "inactive";
+  phone: string;
+  user_type: "senior" | "newcomer" | "volunteer";
+  status: "active" | "inactive" | "suspended";
   created_at?: string;
 }
 
-interface ApiResponse {
+interface BackendResponse {
   success: boolean;
-  count: number;
-  data: User[];
-}
-
-interface SingleApiResponse {
-  success: boolean;
-  data: User;
+  count?: number;
+  data: User | User[];
+  message?: string;
 }
 
 const api = axios.create({
@@ -30,68 +26,31 @@ const api = axios.create({
   },
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("API Error:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Request failed");
+  }
+);
+
 export const getAllUsers = async (): Promise<User[]> => {
   try {
-    const res = await api.get<ApiResponse>("/");
-    const users = res.data.data || [];
-    return users.map(user => ({
-      ...user,
-      id: user.id?.toString()
-    }));
+    const res = await api.get<BackendResponse>("/");
+    if (res.data.success && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+    return [];
   } catch (error) {
     console.error("Error fetching users:", error);
-    return [];
+    throw error;
   }
 };
 
-export const getUserById = async (id: string | number): Promise<User | null> => {
-  try {
-    const res = await api.get<SingleApiResponse>(`/${id}`);
-    const user = res.data.data;
-    return {
-      ...user,
-      id: user.id?.toString()
-    };
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    return null;
+export const getUserById = async (id: number): Promise<User> => {
+  const res = await api.get<BackendResponse>(`/${id}`);
+  if (res.data.success && res.data.data) {
+    return res.data.data as User;
   }
-};
-
-export const createUser = async (data: Partial<User>): Promise<User | null> => {
-  try {
-    const res = await api.post<SingleApiResponse>("/", data);
-    const user = res.data.data;
-    return {
-      ...user,
-      id: user.id?.toString()
-    };
-  } catch (error) {
-    console.error("Error creating user:", error);
-    return null;
-  }
-};
-
-export const updateUser = async (id: string | number, data: Partial<User>): Promise<User | null> => {
-  try {
-    const res = await api.put<SingleApiResponse>(`/${id}`, data);
-    const user = res.data.data;
-    return {
-      ...user,
-      id: user.id?.toString()
-    };
-  } catch (error) {
-    console.error("Error updating user:", error);
-    return null;
-  }
-};
-
-export const deleteUser = async (id: string | number): Promise<boolean> => {
-  try {
-    await api.delete(`/${id}`);
-    return true;
-  } catch (error) {
-    console.error("Error deleting user:", error);
-    return false;
-  }
+  throw new Error("User not found");
 };

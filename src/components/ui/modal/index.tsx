@@ -14,7 +14,6 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   children,
   className,
-  showCloseButton = false, // Changed default to false
   isFullscreen = false,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);

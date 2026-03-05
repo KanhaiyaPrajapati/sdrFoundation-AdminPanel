@@ -3,25 +3,21 @@ import axios from "axios";
 const BASE_URL = "http://localhost:5000/api/volunteers";
 
 export interface Volunteer {
-  id?: string;
-  name: string;
-  email: string;
+  id: number;
+  user_id: number;
+  skills: string;
+  availability: string;
+  joined_date: string;
+  full_name?: string; // This will be populated from users table
+  email?: string;
   phone?: string;
-  skills?: string[];
-  availability?: string;
-  status?: "active" | "inactive";
-  created_at?: string;
 }
 
-interface ApiResponse {
+interface BackendResponse {
   success: boolean;
-  count: number;
-  data: Volunteer[];
-}
-
-interface SingleApiResponse {
-  success: boolean;
-  data: Volunteer;
+  count?: number;
+  data: Volunteer | Volunteer[];
+  message?: string;
 }
 
 const api = axios.create({
@@ -31,68 +27,39 @@ const api = axios.create({
   },
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("API Error:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Request failed");
+  }
+);
+
 export const getAllVolunteers = async (): Promise<Volunteer[]> => {
   try {
-    const res = await api.get<ApiResponse>("/");
-    const volunteers = res.data.data || [];
-    return volunteers.map(volunteer => ({
-      ...volunteer,
-      id: volunteer.id?.toString()
-    }));
+    const res = await api.get<BackendResponse>("/");
+    if (res.data.success && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+    return [];
   } catch (error) {
     console.error("Error fetching volunteers:", error);
-    return [];
+    throw error;
   }
 };
 
-export const getVolunteerById = async (id: string | number): Promise<Volunteer | null> => {
-  try {
-    const res = await api.get<SingleApiResponse>(`/${id}`);
-    const volunteer = res.data.data;
-    return {
-      ...volunteer,
-      id: volunteer.id?.toString()
-    };
-  } catch (error) {
-    console.error("Error fetching volunteer:", error);
-    return null;
+export const getVolunteerById = async (id: number): Promise<Volunteer> => {
+  const res = await api.get<BackendResponse>(`/${id}`);
+  if (res.data.success && res.data.data) {
+    return res.data.data as Volunteer;
   }
+  throw new Error("Volunteer not found");
 };
 
-export const createVolunteer = async (data: Partial<Volunteer>): Promise<Volunteer | null> => {
-  try {
-    const res = await api.post<SingleApiResponse>("/", data);
-    const volunteer = res.data.data;
-    return {
-      ...volunteer,
-      id: volunteer.id?.toString()
-    };
-  } catch (error) {
-    console.error("Error creating volunteer:", error);
-    return null;
+export const getVolunteerByUserId = async (userId: number): Promise<Volunteer> => {
+  const res = await api.get<BackendResponse>(`/user/${userId}`);
+  if (res.data.success && res.data.data) {
+    return res.data.data as Volunteer;
   }
-};
-
-export const updateVolunteer = async (id: string | number, data: Partial<Volunteer>): Promise<Volunteer | null> => {
-  try {
-    const res = await api.put<SingleApiResponse>(`/${id}`, data);
-    const volunteer = res.data.data;
-    return {
-      ...volunteer,
-      id: volunteer.id?.toString()
-    };
-  } catch (error) {
-    console.error("Error updating volunteer:", error);
-    return null;
-  }
-};
-
-export const deleteVolunteer = async (id: string | number): Promise<boolean> => {
-  try {
-    await api.delete(`/${id}`);
-    return true;
-  } catch (error) {
-    console.error("Error deleting volunteer:", error);
-    return false;
-  }
+  throw new Error("Volunteer not found");
 };

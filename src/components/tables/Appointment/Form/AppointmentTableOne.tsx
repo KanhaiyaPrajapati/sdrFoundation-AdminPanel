@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
 import { Modal } from "../../../ui/modal";
 import Badge from "../../../ui/badge/Badge";
 import Alert from "../../../ui/alert/Alert";
-import { Trash2, Eye, Edit, Plus, Calendar,User, Users } from "lucide-react";
+import { Trash2, Eye, Edit, Plus, Calendar, Clock, User, Users } from "lucide-react";
 import Pagination from "../../../ui/Pagination/Pagination";
 import { SearchBar } from "../../../../hooks/SearchBar";
 import {
@@ -19,38 +19,21 @@ import {
   deleteAppointment,
   Appointment,
 } from "../../../../store/appointment-api";
+import { getAllUsers, User as UserType } from "../../../../store/user-api";
+import { getAllVolunteers, Volunteer as VolunteerType } from "../../../../store/volunteer-api";
 import AppointmentForm from "./AppointmentForm";
 import AppointmentDetails from "../Details/AppointmentDetails";
-
-const MOCK_USERS = [
-  { id: 1, full_name: "Mohan Deshpande" },
-  { id: 2, full_name: "Sneha Kapoor" },
-  { id: 3, full_name: "Rajendra Pawar" },
-  { id: 4, full_name: "Fatima Sheikh" },
-  { id: 5, full_name: "Arjun Singh" },
-  { id: 6, full_name: "Meera Nair" },
-  { id: 7, full_name: "Carlos Rodriguez" },
-  { id: 8, full_name: "Lakshmi Iyer" },
-  { id: 9, full_name: "John Smith" },
-  { id: 10, full_name: "Priyanka Chopra" },
-];
-
-const MOCK_VOLUNTEERS = [
-  { id: 1, full_name: "Arjun Singh", user_id: 5 },
-  { id: 2, full_name: "Priyanka Chopra", user_id: 10 },
-  { id: 3, full_name: "Lakshmi Iyer", user_id: 8 },
-  { id: 4, full_name: "Carlos Rodriguez", user_id: 7 },
-  { id: 5, full_name: "Meera Nair", user_id: 6 },
-  { id: 6, full_name: "John Smith", user_id: 9 },
-  { id: 7, full_name: "Rajendra Pawar", user_id: 3 },
-];
 
 interface AppointmentTableOneProps {
   viewMode?: "table" | "grid";
 }
 
 const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "table" }) => {
+  const isFirstLoad = useRef(true);
+  
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
+  const [volunteers, setVolunteers] = useState<VolunteerType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -91,32 +74,57 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
     };
   }, []);
 
-  const fetchAppointments = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getAllAppointments();
-      const safeData = Array.isArray(data) ? data : [];
-      const sortedData = [...safeData].sort((a, b) => {
+      
+      const [appointmentsData, usersData, volunteersData] = await Promise.all([
+        getAllAppointments(),
+        getAllUsers(),
+        getAllVolunteers()
+      ]);
+      
+      const safeAppointments = Array.isArray(appointmentsData) ? appointmentsData : [];
+      const sortedAppointments = [...safeAppointments].sort((a, b) => {
         const idA = typeof a.id === 'string' ? parseInt(a.id) || 0 : a.id || 0;
         const idB = typeof b.id === 'string' ? parseInt(b.id) || 0 : b.id || 0;
         return idA - idB;
       });
-      setAppointments(sortedData);
+      setAppointments(sortedAppointments);
+      
+      const safeUsers = Array.isArray(usersData) ? usersData : [];
+      setUsers(safeUsers);
+      
+      const safeVolunteers = Array.isArray(volunteersData) ? volunteersData : [];
+      
+      const enhancedVolunteers = safeVolunteers.map(vol => {
+        const user = safeUsers.find(u => u.id === vol.user_id);
+        return {
+          ...vol,
+          full_name: user?.full_name || `Volunteer ${vol.id}`
+        };
+      });
+      setVolunteers(enhancedVolunteers);
+      
     } catch (error) {
+      console.error("Error fetching data:", error);
       showAlert({
         type: "error",
         title: "Error",
-        message: error instanceof Error ? error.message : "Failed to load appointments"
+        message: error instanceof Error ? error.message : "Failed to load data"
       });
       setAppointments([]);
+      setUsers([]);
+      setVolunteers([]);
     } finally {
       setLoading(false);
+      isFirstLoad.current = false;
     }
   }, []);
 
   useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+    fetchData();
+  }, [fetchData]);
 
   const showAlert = (alertData: any) => {
     setAlert(alertData);
@@ -179,27 +187,36 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
         return;
       }
 
+      const selectedUser = users.find(u => u.id.toString() === formData.user_id.toString());
+      const selectedVolunteer = volunteers.find(v => v.id.toString() === formData.volunteer_id.toString());
+      
+      if (selectedUser && selectedVolunteer && selectedUser.id.toString() === selectedVolunteer.user_id?.toString()) {
+        showAlert({ type: "error", title: "Error", message: "User and Volunteer cannot be the same person" });
+        return;
+      }
+
       if (mode === "create") {
-        const newAppointment = await createAppointment(formData);
+        await createAppointment(formData);
         showAlert({ type: "success", title: "Success!", message: "Appointment created successfully" });
-        setAppointments((prev) => [...prev, newAppointment].sort((a, b) => {
-          const idA = typeof a.id === 'string' ? parseInt(a.id) || 0 : a.id || 0;
-          const idB = typeof b.id === 'string' ? parseInt(b.id) || 0 : b.id || 0;
-          return idA - idB;
-        }));
+        
+        await fetchData();
         closeModal();
       }
       
       if (mode === "edit" && currentAppointment?.id) {
-        const updatedAppointment = await updateAppointmentPut(currentAppointment.id, formData);
+        await updateAppointmentPut(currentAppointment.id, formData);
         showAlert({ type: "success", title: "Success!", message: "Appointment updated successfully" });
-        setAppointments((prev) =>
-          prev.map((app) => app.id === currentAppointment.id ? updatedAppointment : app)
-        );
+        
+        await fetchData();
         closeModal();
       }
     } catch (error: any) {
-      showAlert({ type: "error", title: "Error", message: error.message });
+      console.error("Submit error:", error);
+      showAlert({ 
+        type: "error", 
+        title: "Error", 
+        message: error.response?.data?.message || error.message || "Failed to save appointment" 
+      });
     }
   };
 
@@ -213,9 +230,15 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
     try {
       await deleteAppointment(currentAppointment.id);
       showAlert({ type: "success", title: "Success!", message: "Appointment deleted successfully" });
-      setAppointments((prev) => prev.filter((app) => app.id !== currentAppointment.id));
+      
+      await fetchData();
     } catch (error: any) {
-      showAlert({ type: "error", title: "Error", message: error.message });
+      console.error("Delete error:", error);
+      showAlert({ 
+        type: "error", 
+        title: "Error", 
+        message: error.response?.data?.message || error.message || "Failed to delete appointment" 
+      });
     } finally {
       setIsDeleteModalOpen(false);
       setCurrentAppointment(null);
@@ -242,29 +265,47 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
     return apps.filter((app) =>
       app.user_name?.toLowerCase().includes(term) ||
       app.volunteer_name?.toLowerCase().includes(term) ||
-      app.appointment_date.includes(term)
+      app.appointment_date.includes(term) ||
+      app.status.toLowerCase().includes(term)
     );
   }, [searchTerm]);
 
-  const filteredAppointments = useMemo(() => filterAppointments(appointments), [appointments, filterAppointments]);
-  const totalPages = Math.max(1, Math.ceil(filteredAppointments.length / itemsPerPage));
-  const paginatedAppointments = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredAppointments.slice(start, start + itemsPerPage);
-  }, [filteredAppointments, currentPage]);
+  const filteredAppointments = useMemo(() => {
+    return filterAppointments(appointments);
+  }, [appointments, filterAppointments]);
 
-  const handleSearchChange = (value: string) => {
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(filteredAppointments.length / itemsPerPage));
+  }, [filteredAppointments.length, itemsPerPage]);
+
+  const paginatedAppointments = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAppointments.slice(startIndex, endIndex);
+  }, [filteredAppointments, currentPage, itemsPerPage]);
+
+  const handleSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
-  };
+  }, []);
 
-  if (loading) {
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  if (loading && isFirstLoad.current) {
     return (
-      <div className="py-10 text-center">
+      <div className="py-10 text-center text-gray-900 dark:text-white">
         <div className="flex justify-center items-center space-x-2">
-          <div className="w-4 h-4 bg-amber-500 rounded-full animate-bounce"></div>
-          <div className="w-4 h-4 bg-emerald-500 rounded-full animate-bounce"></div>
-          <div className="w-4 h-4 bg-orange-500 rounded-full animate-bounce"></div>
+          <div className="w-4 h-4 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+          <div className="w-4 h-4 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-4 h-4 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
         </div>
         <p className="mt-2 text-gray-600 dark:text-gray-400">Loading appointments...</p>
       </div>
@@ -277,7 +318,7 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
         <div className="flex flex-col sm:flex-row justify-between items-center px-5 py-4 gap-3">
           <button
             onClick={() => openModal("create")}
-            className="inline-flex items-center justify-center rounded-lg bg-white p-2 text-amber-600 hover:bg-amber-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-all"
+            className="inline-flex items-center justify-center rounded-lg bg-white p-2 text-amber-600 hover:bg-amber-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-all duration-200"
             title="Schedule New Appointment"
           >
             <Plus size={20} />
@@ -292,63 +333,99 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
         )}
 
         <div className="max-w-full overflow-x-auto">
-          <Table>
-            <TableHeader>
+          <Table className="min-w-175">
+            <TableHeader className="border-b border-gray-100 dark:border-white/5">
               <TableRow>
-                {["S.No", "User", "Volunteer", "Date & Time", "Status", "Actions"].map((head) => (
-                  <TableCell key={head} isHeader className="px-5 py-3 font-medium text-gray-500 text-start">
+                {[
+                  "S.No",
+                  "User",
+                  "Volunteer",
+                  "Date & Time",
+                  "Status",
+                  "Actions",
+                ].map((head) => (
+                  <TableCell
+                    key={head}
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+                  >
                     {head}
                   </TableCell>
                 ))}
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
               {paginatedAppointments.length > 0 ? (
                 paginatedAppointments.map((app, index) => (
-                  <TableRow key={String(app.id)} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <TableCell className="px-5 py-4 text-start">
+                  <TableRow key={String(app.id)} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <TableCell className="px-5 py-4 sm:px-6 text-start whitespace-nowrap">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </span>
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start">
+                    <TableCell className="px-5 py-4 sm:px-6 text-start whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-emerald-600" />
-                        <span className="font-medium text-gray-800 dark:text-white">
+                        <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                          <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
                           {app.user_name || `User ${app.user_id}`}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start">
+                    <TableCell className="px-5 py-4 sm:px-6 text-start whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-purple-600" />
-                        <span className="font-medium text-gray-800 dark:text-white">
+                        <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+                          <Users className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
                           {app.volunteer_name || `Volunteer ${app.volunteer_id}`}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="px-5 py-4 text-start">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
                         <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {formatDate(app.appointment_date)} {formatTime(app.appointment_time)}
+                          {formatDate(app.appointment_date)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {formatTime(app.appointment_time)}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-start">
-                      <Badge size="sm" color={getStatusColor(app.status)}>
+                    <TableCell className="px-4 py-3 text-start whitespace-nowrap">
+                      <Badge
+                        size="sm"
+                        color={getStatusColor(app.status)}
+                      >
                         {app.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-5 py-4">
+                    <TableCell className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => openModal("view", app)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="View">
+                        <button
+                          onClick={() => openModal("view", app)}
+                          className="p-2 text-blue-500 hover:text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                          title="View Details"
+                        >
                           <Eye size={16} />
                         </button>
-                        <button onClick={() => openModal("edit", app)} className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg" title="Edit">
+                        <button
+                          onClick={() => openModal("edit", app)}
+                          className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
+                          title="Edit Appointment"
+                        >
                           <Edit size={16} />
                         </button>
-                        <button onClick={() => openDeleteModal(app)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="Delete">
+                        <button
+                          onClick={() => openDeleteModal(app)}
+                          className="p-2 text-red-500 hover:text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                          title="Delete Appointment"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -357,8 +434,22 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
                 ))
               ) : (
                 <TableRow>
-                  <TableCell  className="px-4 py-8 text-center text-gray-500">
-                    <p>No appointments found</p>
+                  <TableCell  className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <p className="text-lg font-medium">No appointments found</p>
+                      <p className="text-sm text-gray-400">
+                        {searchTerm ? `No results for "${searchTerm}"` : "Click + to schedule an appointment"}
+                      </p>
+                      {!searchTerm && (
+                        <button
+                          onClick={() => openModal("create")}
+                          className="mt-2 inline-flex items-center justify-center p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                          title="Schedule New Appointment"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -367,13 +458,16 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
         </div>
 
         {totalPages > 1 && (
-          <div className="px-5 py-4 border-t">
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-800">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </div>
 
-      {/* Modals */}
       {isModalOpen && (
         <Modal isOpen onClose={closeModal} className="max-w-md">
           {mode === "view" && currentAppointment && (
@@ -386,8 +480,8 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
               onChange={handleChange}
               onSubmit={handleSubmit}
               onCancel={closeModal}
-              users={MOCK_USERS}
-              volunteers={MOCK_VOLUNTEERS}
+              users={users}
+              volunteers={volunteers}
             />
           )}
         </Modal>
@@ -396,15 +490,26 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
       {isDeleteModalOpen && currentAppointment && (
         <Modal isOpen onClose={() => setIsDeleteModalOpen(false)} className="max-w-md">
           <div className="bg-white dark:bg-[#1F2937] rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-center mb-4">Delete Appointment</h3>
-            <p className="text-sm text-center text-gray-600 mb-6">
-              Are you sure you want to delete this appointment?
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+              <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-center">
+              Delete Appointment
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-white/70 mb-6 text-center">
+              Are you sure you want to delete this appointment? This action cannot be undone.
             </p>
             <div className="flex justify-center gap-3">
-              <button onClick={() => setIsDeleteModalOpen(false)} className="px-4 py-2 bg-gray-100 rounded-lg">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-200"
+              >
                 Cancel
               </button>
-              <button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg">
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm"
+              >
                 Delete
               </button>
             </div>
@@ -413,8 +518,12 @@ const AppointmentTableOne: React.FC<AppointmentTableOneProps> = ({ viewMode = "t
       )}
 
       {alert && (
-        <div className="fixed bottom-5 right-5 z-50">
-          <Alert variant={alert.type} title={alert.title} message={alert.message} />
+        <div className="fixed bottom-5 right-5 z-50 animate-slide-up">
+          <Alert
+            variant={alert.type}
+            title={alert.title}
+            message={alert.message}
+          />
         </div>
       )}
     </>

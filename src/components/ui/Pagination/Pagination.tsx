@@ -41,7 +41,6 @@ const Pagination: React.FC<PaginationProps> = ({
   return (
     <div className="flex items-center justify-center my-3">
       <div className="flex flex-wrap items-center gap-2 text-sm max-w-full">
-        {/* Prev Button */}
         <button
           onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
           className="w-8 h-8 flex items-center justify-center rounded-lg dark:text-white border border-gray-200 dark:border-gray-700 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -51,7 +50,6 @@ const Pagination: React.FC<PaginationProps> = ({
           <ChevronLeft size={18} />
         </button>
 
-        {/* Page Numbers */}
         {getPageNumbers().map((item, index) => {
           if (item === "...") {
             return (
@@ -83,7 +81,6 @@ const Pagination: React.FC<PaginationProps> = ({
           );
         })}
 
-        {/* Next Button */}
         <button
           onClick={() =>
             currentPage < totalPages && onPageChange(currentPage + 1)
