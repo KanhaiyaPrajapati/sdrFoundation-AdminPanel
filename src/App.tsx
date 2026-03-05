@@ -16,17 +16,12 @@ export default function App() {
         <Routes>
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
-
             <Route path="/basic-tables" element={<BasicTables />} />
             <Route path="/Admin-Tables" element={<AdminTable />} />
             <Route path="/users" element={<Users />} />
           </Route>
-
           <Route path="/signin" element={<SignIn />} />
-
           <Route path="*" element={<NotFound />} />
-
-          
         </Routes>
       </Router>
     </>

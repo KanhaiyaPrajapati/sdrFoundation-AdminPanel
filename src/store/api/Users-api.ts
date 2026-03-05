@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 
 // Base URL for all user-related endpoints
-const BASE_URL = "http://192.168.1.20:5000/api/users";
+const BASE_URL = "http://192.168.1.8:5000/api/users";
 const REGISTER_URL = `${BASE_URL}/register`;
 
 // Create an axios instance with default config

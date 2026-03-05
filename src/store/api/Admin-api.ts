@@ -9,7 +9,7 @@ export interface Admin {
 }
 
 const api = axios.create({
-  baseURL: "http://192.168.1.20:5000/api/admins",
+  baseURL: "http://192.168.1.8:5000/api/admins",
   headers: { "Content-Type": "application/json" },
 });
 
