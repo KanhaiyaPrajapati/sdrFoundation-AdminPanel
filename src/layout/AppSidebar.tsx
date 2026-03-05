@@ -38,6 +38,12 @@ const navItems: NavItem[] = [
     subItems: [{ name: "Admin Tables", path: "/Admin-tables", pro: false }],
   },
 
+  {
+    name: "Donations",
+    icon: <TableIcon />,
+    subItems: [{ name: "Donations", path: "/Donations-Tables", pro: false }],
+  }
+
 ];
 
 const othersItems: NavItem[] = [

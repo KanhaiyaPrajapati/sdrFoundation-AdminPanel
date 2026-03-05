@@ -54,7 +54,6 @@ const AdminTable: React.FC = () => {
     fetchAdmins();
   }, [fetchAdmins]);
 
-  // Search Logic
   const filteredAdmins = useMemo(() => {
     const safeAdmins = Array.isArray(admins) ? admins : [];
     if (!searchTerm.trim()) return safeAdmins;
@@ -65,7 +64,6 @@ const AdminTable: React.FC = () => {
     );
   }, [admins, searchTerm]);
 
-  // Pagination Logic
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(filteredAdmins.length / itemsPerPage));
   }, [filteredAdmins.length, itemsPerPage]);
@@ -135,7 +133,6 @@ const AdminTable: React.FC = () => {
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-800">
-        {/* Header with Search and Add Button */}
         <div className="flex flex-col sm:flex-row justify-between items-center px-4 sm:px-5 py-4 gap-3 border-b border-gray-100 dark:border-gray-700">
           <button
             onClick={() => openModal("create")}
@@ -148,7 +145,6 @@ const AdminTable: React.FC = () => {
           </div>
         </div>
 
-        {/* Table Content */}
         <div className="w-full overflow-x-auto">
           <Table className="w-full">
             <TableHeader className="bg-gray-50/50 dark:bg-gray-900/20">
@@ -199,7 +195,6 @@ const AdminTable: React.FC = () => {
           </Table>
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="border-t border-gray-100 px-4 py-3 dark:border-gray-800">
             <Pagination
@@ -211,7 +206,6 @@ const AdminTable: React.FC = () => {
         )}
       </div>
 
-      {/* View/Create/Edit Modals */}
       <Modal isOpen={isModalOpen} onClose={closeModal} className={mode === 'view' ? "max-w-lg w-[90vw]" : "w-[90vw] md:w-[50vw] max-w-2xl"}>
         <div className="bg-white dark:bg-[#1F2937] rounded-xl overflow-hidden">
           {mode === "view" && selectedAdmin ? (
@@ -226,7 +220,6 @@ const AdminTable: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && selectedAdmin && (
         <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} className="max-w-md w-[95vw] mx-auto">
           <div className="rounded-3xl bg-white p-6 dark:bg-[#1F2937]">
@@ -243,7 +236,6 @@ const AdminTable: React.FC = () => {
               <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} className="sm:w-32">
                 Cancel
               </Button>
-              {/* FIXED: Changed to variant="primary" to satisfy types, used className for the red color */}
               <Button 
                 variant="primary" 
                 onClick={confirmDelete} 
@@ -256,7 +248,6 @@ const AdminTable: React.FC = () => {
         </Modal>
       )}
 
-      {/* Alert System */}
       {alert && (
         <div className="fixed bottom-5 right-2 z-50 w-[calc(100vw-1rem)] max-w-sm sm:w-72">
           <Alert variant={alert.type} title={alert.type === "success" ? "Success" : "Error"} message={alert.message} />
