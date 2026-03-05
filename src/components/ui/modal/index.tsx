@@ -5,8 +5,7 @@ interface ModalProps {
   onClose: () => void;
   className?: string;
   children: React.ReactNode;
-  showCloseButton?: boolean;
-  isFullscreen?: boolean;
+  isFullscreen?: boolean; // Default to false for backwards compatibility
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -70,3 +69,6 @@ export const Modal: React.FC<ModalProps> = ({
     </div>
   );
 };
+
+
+

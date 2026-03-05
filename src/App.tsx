@@ -6,6 +6,7 @@ import AdminTable from "./pages/Tables/admin/AdminTable";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
+import Users from "./pages/Users/UsersTable";
 
 export default function App() {
   return (
@@ -18,13 +19,20 @@ export default function App() {
 
             <Route path="/basic-tables" element={<BasicTables />} />
             <Route path="/Admin-Tables" element={<AdminTable />} />
+            <Route path="/users" element={<Users />} />
           </Route>
 
           <Route path="/signin" element={<SignIn />} />
 
           <Route path="*" element={<NotFound />} />
+
+          
         </Routes>
       </Router>
     </>
   );
 }
+
+
+
+
