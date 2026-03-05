@@ -1,5 +1,13 @@
 import React, { useRef, useEffect } from "react";
-import { DollarSign, Mail, User, Calendar, Clock, Tag, Hash, X } from "lucide-react";
+import {
+  DollarSign,
+  Mail,
+  User,
+  Calendar,
+  Clock,
+  Hash,
+  X,
+} from "lucide-react";
 
 interface DonationDetailsProps {
   donation: {
@@ -15,12 +23,18 @@ interface DonationDetailsProps {
   onClose: () => void;
 }
 
-const DonationDetails: React.FC<DonationDetailsProps> = ({ donation, onClose }) => {
+const DonationDetails: React.FC<DonationDetailsProps> = ({
+  donation,
+  onClose,
+}) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
         onClose();
       }
     };
@@ -44,20 +58,20 @@ const DonationDetails: React.FC<DonationDetailsProps> = ({ donation, onClose }) 
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -118,7 +132,9 @@ const DonationDetails: React.FC<DonationDetailsProps> = ({ donation, onClose }) 
               <span className="text-xs font-medium text-gray-800 dark:text-white">
                 #{donation.id?.toString().slice(0, 8) || "DON-001"}
               </span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${getStatusColor(donation.status)}`}>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${getStatusColor(donation.status)}`}
+              >
                 {donation.status?.toUpperCase()}
               </span>
             </div>

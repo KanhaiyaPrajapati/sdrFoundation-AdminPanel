@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://192.168.1.20:5000/api/donations";
+const BASE_URL = "http://192.168.1.8:5000/api/donations";
 
 export interface Donation {
   id?: string | number;
@@ -14,7 +14,6 @@ export interface Donation {
   user_id?: string | number | null;
 }
 
-// Backend response structure
 interface BackendResponse {
   success: boolean;
   count?: number;
@@ -29,23 +28,17 @@ const api = axios.create({
   },
 });
 
-// Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error("API Error:", error.response?.data || error.message);
     throw new Error(error.response?.data?.message || "Request failed");
-  }
+  },
 );
 
-// ===========================================
-// GET ALL DONATIONS
-// ===========================================
 export const getAllDonations = async (): Promise<Donation[]> => {
   try {
     const res = await api.get<BackendResponse>("/");
-    console.log("API Response:", res.data);
-    
     if (res.data.success && Array.isArray(res.data.data)) {
       return res.data.data;
     } else if (Array.isArray(res.data)) {
@@ -60,10 +53,9 @@ export const getAllDonations = async (): Promise<Donation[]> => {
   }
 };
 
-// ===========================================
-// GET DONATION BY ID
-// ===========================================
-export const getDonationById = async (id: string | number): Promise<Donation> => {
+export const getDonationById = async (
+  id: string | number,
+): Promise<Donation> => {
   const res = await api.get<BackendResponse>(`/${id}`);
   if (res.data.success && res.data.data) {
     return res.data.data as Donation;
@@ -71,10 +63,9 @@ export const getDonationById = async (id: string | number): Promise<Donation> =>
   throw new Error("Donation not found");
 };
 
-// ===========================================
-// GET DONATIONS BY EMAIL
-// ===========================================
-export const getDonationsByEmail = async (email: string): Promise<Donation[]> => {
+export const getDonationsByEmail = async (
+  email: string,
+): Promise<Donation[]> => {
   try {
     const res = await api.get<BackendResponse>(`/email/${email}`);
     if (res.data.success && Array.isArray(res.data.data)) {
@@ -87,10 +78,9 @@ export const getDonationsByEmail = async (email: string): Promise<Donation[]> =>
   }
 };
 
-// ===========================================
-// GET DONATIONS BY STATUS
-// ===========================================
-export const getDonationsByStatus = async (status: string): Promise<Donation[]> => {
+export const getDonationsByStatus = async (
+  status: string,
+): Promise<Donation[]> => {
   try {
     const res = await api.get<BackendResponse>(`/status/${status}`);
     if (res.data.success && Array.isArray(res.data.data)) {
@@ -103,12 +93,14 @@ export const getDonationsByStatus = async (status: string): Promise<Donation[]> 
   }
 };
 
-// ===========================================
-// GET DONATIONS BY DATE RANGE
-// ===========================================
-export const getDonationsByDateRange = async (startDate: string, endDate: string): Promise<Donation[]> => {
+export const getDonationsByDateRange = async (
+  startDate: string,
+  endDate: string,
+): Promise<Donation[]> => {
   try {
-    const res = await api.get<BackendResponse>(`/range?startDate=${startDate}&endDate=${endDate}`);
+    const res = await api.get<BackendResponse>(
+      `/range?startDate=${startDate}&endDate=${endDate}`,
+    );
     if (res.data.success && Array.isArray(res.data.data)) {
       return res.data.data;
     }
@@ -119,9 +111,6 @@ export const getDonationsByDateRange = async (startDate: string, endDate: string
   }
 };
 
-// ===========================================
-// GET TODAY'S DONATIONS
-// ===========================================
 export const getTodaysDonations = async (): Promise<Donation[]> => {
   try {
     const res = await api.get<BackendResponse>("/today");
@@ -135,9 +124,6 @@ export const getTodaysDonations = async (): Promise<Donation[]> => {
   }
 };
 
-// ===========================================
-// GET DONATION STATISTICS
-// ===========================================
 export const getDonationStats = async (): Promise<any> => {
   try {
     const res = await api.get<BackendResponse>("/stats");
@@ -151,9 +137,6 @@ export const getDonationStats = async (): Promise<any> => {
   }
 };
 
-// ===========================================
-// GET MONTHLY SUMMARY
-// ===========================================
 export const getMonthlySummary = async (year: number): Promise<any[]> => {
   try {
     const res = await api.get<BackendResponse>(`/monthly/${year}`);
@@ -167,40 +150,35 @@ export const getMonthlySummary = async (year: number): Promise<any[]> => {
   }
 };
 
-// ===========================================
-// CREATE DONATION
-// ===========================================
-export const createDonation = async (data: Partial<Donation>): Promise<Donation> => {
+export const createDonation = async (
+  data: Partial<Donation>,
+): Promise<Donation> => {
   const res = await api.post<BackendResponse>("/", data);
   console.log("Create response:", res.data);
-  
+
   if (res.data.success && res.data.data) {
     return res.data.data as Donation;
   }
   throw new Error(res.data.message || "Failed to create donation");
 };
 
-// ===========================================
-// REGISTER DONATION (with validation)
-// ===========================================
-export const registerDonation = async (data: Partial<Donation>): Promise<Donation> => {
+export const registerDonation = async (
+  data: Partial<Donation>,
+): Promise<Donation> => {
   const res = await api.post<BackendResponse>("/register", data);
-  
+
   if (res.data.success && res.data.data) {
     return res.data.data as Donation;
   }
   throw new Error(res.data.message || "Failed to register donation");
 };
 
-// ===========================================
-// UPDATE DONATION (PUT)
-// ===========================================
 export const updateDonationPut = async (
   id: string | number,
-  data: Partial<Donation>
+  data: Partial<Donation>,
 ): Promise<Donation> => {
   const res = await api.put<BackendResponse>(`/${id}`, data);
-  
+
   if (res.data.success) {
     const updated = await getDonationById(id);
     return updated;
@@ -208,15 +186,12 @@ export const updateDonationPut = async (
   throw new Error(res.data.message || "Failed to update donation");
 };
 
-// ===========================================
-// PARTIAL UPDATE DONATION (PATCH)
-// ===========================================
 export const updateDonationPatch = async (
   id: string | number,
-  data: Partial<Donation>
+  data: Partial<Donation>,
 ): Promise<Donation> => {
   const res = await api.patch<BackendResponse>(`/${id}`, data);
-  
+
   if (res.data.success) {
     const updated = await getDonationById(id);
     return updated;
@@ -224,15 +199,12 @@ export const updateDonationPatch = async (
   throw new Error(res.data.message || "Failed to update donation");
 };
 
-// ===========================================
-// UPDATE DONATION STATUS
-// ===========================================
 export const updateDonationStatus = async (
   id: string | number,
-  status: string
+  status: string,
 ): Promise<Donation> => {
   const res = await api.patch<BackendResponse>(`/${id}/status`, { status });
-  
+
   if (res.data.success) {
     const updated = await getDonationById(id);
     return updated;
@@ -240,15 +212,14 @@ export const updateDonationStatus = async (
   throw new Error(res.data.message || "Failed to update donation status");
 };
 
-// ===========================================
-// ASSIGN DONATION TO USER
-// ===========================================
 export const assignDonationToUser = async (
   id: string | number,
-  user_id: string | number
+  user_id: string | number,
 ): Promise<Donation> => {
-  const res = await api.patch<BackendResponse>(`/${id}/assign-user`, { user_id });
-  
+  const res = await api.patch<BackendResponse>(`/${id}/assign-user`, {
+    user_id,
+  });
+
   if (res.data.success) {
     const updated = await getDonationById(id);
     return updated;
@@ -256,9 +227,6 @@ export const assignDonationToUser = async (
   throw new Error(res.data.message || "Failed to assign donation to user");
 };
 
-// ===========================================
-// DELETE DONATION
-// ===========================================
 export const deleteDonation = async (id: string | number): Promise<void> => {
   const res = await api.delete<BackendResponse>(`/${id}`);
   if (!res.data.success) {

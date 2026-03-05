@@ -88,7 +88,7 @@ export default function SignUpForm() {
                   {/* <!-- First Name --> */}
                   <div className="sm:col-span-1">
                     <Label>
-                      First Name<span className="text-error-500">*</span>
+                      First Nam5057e<span className="text-error-500">*</span>
                     </Label>
                     <Input
                       type="text"

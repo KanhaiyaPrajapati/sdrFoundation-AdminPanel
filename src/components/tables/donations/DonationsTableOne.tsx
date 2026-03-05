@@ -25,7 +25,9 @@ interface DonationTableOneProps {
   viewMode?: "table" | "grid";
 }
 
-const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" }) => {
+const DonationTableOne: React.FC<DonationTableOneProps> = ({
+  viewMode = "table",
+}) => {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,8 +57,9 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
       openModal("create");
     };
 
-    window.addEventListener('openAddDonationModal', handleOpenAddModal);
-    return () => window.removeEventListener('openAddDonationModal', handleOpenAddModal);
+    window.addEventListener("openAddDonationModal", handleOpenAddModal);
+    return () =>
+      window.removeEventListener("openAddDonationModal", handleOpenAddModal);
   }, []);
 
   const fetchDonations = useCallback(async () => {
@@ -79,7 +82,8 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
       showAlert({
         type: "error",
         title: "Error",
-        message: error instanceof Error ? error.message : "Failed to load donations",
+        message:
+          error instanceof Error ? error.message : "Failed to load donations",
       });
       setDonations([]);
     } finally {
@@ -124,7 +128,9 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -181,8 +187,10 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
           }
 
           return [...prev, newDonation].sort((a, b) => {
-            const idA = typeof a.id === "string" ? parseInt(a.id) || 0 : a.id || 0;
-            const idB = typeof b.id === "string" ? parseInt(b.id) || 0 : b.id || 0;
+            const idA =
+              typeof a.id === "string" ? parseInt(a.id) || 0 : a.id || 0;
+            const idB =
+              typeof b.id === "string" ? parseInt(b.id) || 0 : b.id || 0;
             return idA - idB;
           });
         });
@@ -191,7 +199,10 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
       }
 
       if (mode === "edit" && currentDonation?.id) {
-        const updatedDonation = await updateDonationPut(currentDonation.id, formData);
+        const updatedDonation = await updateDonationPut(
+          currentDonation.id,
+          formData,
+        );
         showAlert({
           type: "success",
           title: "Success!",
@@ -204,8 +215,10 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
               donation.id === currentDonation.id ? updatedDonation : donation,
             )
             .sort((a, b) => {
-              const idA = typeof a.id === "string" ? parseInt(a.id) || 0 : a.id || 0;
-              const idB = typeof b.id === "string" ? parseInt(b.id) || 0 : b.id || 0;
+              const idA =
+                typeof a.id === "string" ? parseInt(a.id) || 0 : a.id || 0;
+              const idB =
+                typeof b.id === "string" ? parseInt(b.id) || 0 : b.id || 0;
               return idA - idB;
             }),
         );
@@ -242,9 +255,13 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
         message: "Donation deleted successfully",
       });
 
-      setDonations((prev) => prev.filter((donation) => donation.id !== currentDonation.id));
+      setDonations((prev) =>
+        prev.filter((donation) => donation.id !== currentDonation.id),
+      );
 
-      const updatedDonations = donations.filter((d) => d.id !== currentDonation.id);
+      const updatedDonations = donations.filter(
+        (d) => d.id !== currentDonation.id,
+      );
       const filtered = filterDonations(updatedDonations);
       const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
 
@@ -311,10 +328,14 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Success": return "success";
-      case "Pending": return "warning";
-      case "Failed": return "error";
-      default: return "info";
+      case "Success":
+        return "success";
+      case "Pending":
+        return "warning";
+      case "Failed":
+        return "error";
+      default:
+        return "info";
     }
   };
 
@@ -414,25 +435,24 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start whitespace-nowrap">
                       <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
-                        {new Intl.NumberFormat('en-US', { 
-                          style: 'currency', 
-                          currency: 'USD' 
+                        {new Intl.NumberFormat("en-US", {
+                          style: "currency",
+                          currency: "USD",
                         }).format(donation.amount)}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start whitespace-nowrap">
-                      <Badge
-                        size="sm"
-                        color={getStatusColor(donation.status)}
-                      >
+                      <Badge size="sm" color={getStatusColor(donation.status)}>
                         {donation.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start whitespace-nowrap">
                       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                         <Calendar size={14} />
-                        {donation.donation_date 
-                          ? new Date(donation.donation_date).toLocaleDateString() 
+                        {donation.donation_date
+                          ? new Date(
+                              donation.donation_date,
+                            ).toLocaleDateString()
                           : "N/A"}
                       </div>
                     </TableCell>
@@ -469,7 +489,7 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
                     <div className="flex flex-col items-center justify-center gap-2">
                       <p className="text-lg font-medium">No donations found</p>
                       <p className="text-sm text-gray-400">
-                        {searchTerm 
+                        {searchTerm
                           ? `No results for "${searchTerm}"`
                           : "Click + to create one"}
                       </p>
@@ -504,10 +524,16 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
       {/* Modal for Create/Edit/View */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal} />
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={closeModal}
+          />
           <div className="relative z-10 w-full max-w-md">
             {mode === "view" && currentDonation && (
-              <DonationDetails donation={currentDonation} onClose={closeModal} />
+              <DonationDetails
+                donation={currentDonation}
+                onClose={closeModal}
+              />
             )}
             {(mode === "create" || mode === "edit") && (
               <DonationForm
@@ -525,7 +551,10 @@ const DonationTableOne: React.FC<DonationTableOneProps> = ({ viewMode = "table" 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && currentDonation && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)} />
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsDeleteModalOpen(false)}
+          />
           <div className="relative z-10 w-full max-w-md bg-white dark:bg-[#1F2937] rounded-xl p-6 shadow-2xl border border-gray-200 dark:border-gray-800">
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
               <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
