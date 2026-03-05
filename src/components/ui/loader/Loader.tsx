@@ -3,12 +3,12 @@ import React from "react";
 const Loader: React.FC = () => {
   return (
     <div className="flex items-center justify-center">
-      <div className="relative w-[36px] h-[36px] grid">
+      <div className="relative w-9 h-9 grid">
         <div className="absolute inset-0 rounded-full border-4 border-transparent border-r-blue-600 animate-spin-fast"></div>
 
-        <div className="absolute inset-[2px] rounded-full border-4 border-transparent border-r-blue-600 animate-spin-medium"></div>
+        <div className="absolute inset-0.5 rounded-full border-4 border-transparent border-r-blue-600 animate-spin-medium"></div>
 
-        <div className="absolute inset-[8px] rounded-full border-4 border-transparent border-r-blue-600 animate-spin-slow"></div>
+        <div className="absolute inset-2 rounded-full border-4 border-transparent border-r-blue-600 animate-spin-slow"></div>
       </div>
 
       <style>

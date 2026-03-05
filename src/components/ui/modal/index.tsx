@@ -5,7 +5,6 @@ interface ModalProps {
   onClose: () => void;
   className?: string;
   children: React.ReactNode;
-  showCloseButton?: boolean;
   isFullscreen?: boolean;
 }
 
@@ -70,3 +69,6 @@ export const Modal: React.FC<ModalProps> = ({
     </div>
   );
 };
+
+
+
