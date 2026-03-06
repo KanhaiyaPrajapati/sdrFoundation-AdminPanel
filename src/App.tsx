@@ -3,6 +3,7 @@ import SignIn from "./pages/AuthPages/SignIn";
 import NotFound from "./pages/OtherPage/NotFound";
 import BasicTables from "./pages/Tables/BasicTables";
 import AdminTable from "./pages/Tables/admin/AdminTable";
+import VolunteersTables from "./pages/Tables/Volunteers/Volunteers"; // Import Volunteers page
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
@@ -19,6 +20,13 @@ export default function App() {
             <Route path="/basic-tables" element={<BasicTables />} />
             <Route path="/Admin-Tables" element={<AdminTable />} />
             <Route path="/users" element={<Users />} />
+
+            {/* Tables Routes */}
+            <Route path="/basic-tables" element={<BasicTables />} />
+            <Route path="/volunteers" element={<VolunteersTables />} /> {/* Add Volunteers route */}
+            
+            {/* You can add more table routes here */}
+            {/* <Route path="/contact-leads" element={<ContactLeadsTables />} /> */}
           </Route>
           <Route path="/signin" element={<SignIn />} />
           <Route path="*" element={<NotFound />} />
@@ -27,6 +35,7 @@ export default function App() {
     </>
   );
 }
+
 
 
 

@@ -64,6 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
         className={`${contentClasses} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close button section completely removed */}
         <div>{children}</div>
       </div>
     </div>
