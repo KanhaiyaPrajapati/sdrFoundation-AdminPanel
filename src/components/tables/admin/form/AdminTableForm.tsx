@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { X, Loader2, Shield, User, Mail, Lock } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { X, Shield, User, Mail, Lock, Plus, Edit } from "lucide-react";
 import { Admin } from "../../../../store/api/Admin-api";
 
 interface AdminTableFormProps {
@@ -9,20 +9,21 @@ interface AdminTableFormProps {
   isLoading?: boolean;
 }
 
-const AdminTableForm: React.FC<AdminTableFormProps> = ({ 
-  onClose, 
-  adminData, 
+const AdminTableForm: React.FC<AdminTableFormProps> = ({
+  onClose,
+  adminData,
   onSubmit,
-  isLoading = false 
+  isLoading = false,
 }) => {
   const [formData, setFormData] = useState<Admin>({
     name: "",
     email: "",
     role: "Admin",
-    password: ""
+    password: "",
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (adminData) {
@@ -30,30 +31,55 @@ const AdminTableForm: React.FC<AdminTableFormProps> = ({
         name: adminData.name || "",
         email: adminData.email || "",
         role: adminData.role || "Admin",
-        password: adminData.password || "" 
+        password: adminData.password || "",
       });
     }
   }, [adminData]);
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && !isLocked) {
-      onClose();
-    }
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (formRef.current && !formRef.current.contains(event.target as Node) && !isLocked) {
+        onClose();
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isLocked) onClose();
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [onClose, isLoading, isSubmitting]);
+
+  const isLocked = isSubmitting || isLoading;
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (formError) setFormError(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormSubmit = async () => {
     setFormError(null);
-    setIsSubmitting(true);
+    if (!formData.name.trim()) return setFormError("Full name is required");
     
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) return setFormError("Invalid email format");
+    
+    if (!adminData && (!formData.password || formData.password.length < 6)) {
+      return setFormError("Password must be at least 6 characters");
+    }
+
+    setIsSubmitting(true);
     try {
-      if (!formData.name.trim()) throw new Error("Full name is required");
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) throw new Error("Invalid email format");
-      if (!adminData && (!formData.password || formData.password.length < 6)) {
-        throw new Error("Password must be at least 6 characters");
-      }
-      
       await onSubmit(formData);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Something went wrong");
@@ -62,147 +88,161 @@ const AdminTableForm: React.FC<AdminTableFormProps> = ({
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | React.SelectHTMLAttributes<HTMLSelectElement>>) => {
-    const { name, value } = e.target as HTMLInputElement;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (formError) setFormError(null);
-  };
-
-  const isLocked = isSubmitting || isLoading;
-
   return (
-    <div 
-      onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md transition-opacity cursor-pointer overflow-y-auto"
-    >
-      <div 
-        className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col cursor-default my-auto border border-gray-100 dark:border-gray-800 max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-all">
+      <div
+        ref={formRef}
+        className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden"
       >
-        <div className="flex items-center justify-between px-6 py-4 sm:px-8 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 shrink-0 rounded-t-2xl">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              {adminData ? "Update Admin" : "Create New Admin"}
-            </h3>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-full"
-            disabled={isLocked}
-          >
-            <X size={20} />
-          </button>
-        </div>
+        {/* Top Accent Bar */}
+        <div className="h-1 w-full bg-gradient-to-r from-amber-500 via-orange-500 to-emerald-500" />
 
-        <div className="overflow-y-auto p-6 sm:p-8 custom-scrollbar">
-          <form id="admin-form" onSubmit={handleSubmit}>
-            {formError && (
-              <div className="mb-6 flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
-                <span className="shrink-0 h-2 w-2 rounded-full bg-red-500" />
-                {formError}
+        {/* Header */}
+        <div className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-100 to-emerald-100 dark:from-amber-900/30 dark:to-emerald-900/30 flex items-center justify-center shrink-0">
+                {adminData ? (
+                  <Edit className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                ) : (
+                  <Plus className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                )}
               </div>
-            )}
-
-            <div className="space-y-4 sm:space-y-5">
-              <div className="group">
-                <label className="flex items-center gap-2 mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  <User size={16} className="text-gray-400" />
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all dark:text-white placeholder:text-gray-400 outline-none"
-                  placeholder="John Doe"
-                  disabled={isLocked}
-                />
-              </div>
-
               <div>
-                <label className="flex items-center gap-2 mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  <Mail size={16} className="text-gray-400" />
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all dark:text-white placeholder:text-gray-400 outline-none"
-                  placeholder="john@company.com"
-                  disabled={isLocked}
-                />
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  <Lock size={16} className="text-gray-400" />
-                  {adminData ? "Update Password (Optional)" : "Initial Password"}
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all dark:text-white outline-none"
-                  placeholder="••••••••"
-                  disabled={isLocked}
-                />
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  <Shield size={16} className="text-gray-400" />
-                  Access Level
-                </label>
-                <div className="relative">
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange as any}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all dark:text-white appearance-none cursor-pointer outline-none"
-                    disabled={isLocked}
-                  >
-                    <option value="Admin">Standard Admin</option>
-                    <option value="Super Admin">Super Admin (Root)</option>
-                    <option value="Moderator">Moderator</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
-                    <svg className="fill-current h-4 w-4" viewBox="0 0 20 20">
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                    </svg>
-                  </div>
-                </div>
+                <h2 className="text-sm font-semibold text-gray-800 dark:text-white">
+                  {adminData ? "Update Admin" : "Add New Admin"}
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {adminData ? "Modify account access" : "Register a new administrator"}
+                </p>
               </div>
             </div>
-          </form>
-        </div>
-
-        <div className="px-6 py-4 sm:px-8 border-t border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 shrink-0">
-          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
             <button
-              type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-6 py-3 text-sm font-bold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:text-gray-500 transition-all"
               disabled={isLocked}
             >
-              Discard
-            </button>
-            <button
-              form="admin-form" 
-              type="submit"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-lg min-w-[160px]"
-              disabled={isLocked}
-            >
-              {isLocked ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <span>{adminData ? "Save Changes" : "Create Account"}</span>
-              )}
+              <X size={16} />
             </button>
           </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-4 space-y-2 bg-gray-50 dark:bg-gray-900">
+          {formError && (
+            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">{formError}</p>
+            </div>
+          )}
+
+          {/* Full Name Field */}
+          <div className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 flex items-center justify-center shrink-0">
+              <User className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
+                FULL NAME <span className="text-red-500">*</span>
+              </p>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="e.g., John Doe"
+                className="w-full text-xs bg-transparent border-b border-gray-200 dark:border-gray-700 focus:border-amber-500 dark:focus:border-amber-400 outline-none py-0.5 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                disabled={isLocked}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Email Field */}
+          <div className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center shrink-0">
+              <Mail className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
+                EMAIL ADDRESS <span className="text-red-500">*</span>
+              </p>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="admin@example.com"
+                className="w-full text-xs bg-transparent border-b border-gray-200 dark:border-gray-700 focus:border-amber-500 dark:focus:border-amber-400 outline-none py-0.5 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                disabled={isLocked}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Password Field */}
+          <div className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 flex items-center justify-center shrink-0">
+              <Lock className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
+                {adminData ? "NEW PASSWORD (OPTIONAL)" : "PASSWORD *"}
+              </p>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                className="w-full text-xs bg-transparent border-b border-gray-200 dark:border-gray-700 focus:border-amber-500 dark:focus:border-amber-400 outline-none py-0.5 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                disabled={isLocked}
+              />
+            </div>
+          </div>
+
+          {/* Role Selection */}
+          <div className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 flex items-center justify-center shrink-0">
+              <Shield className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
+                ACCESS LEVEL <span className="text-red-500">*</span>
+              </p>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full text-xs bg-transparent border-b border-gray-200 dark:border-gray-700 focus:border-amber-500 dark:focus:border-amber-400 outline-none py-0.5 text-gray-800 dark:text-white"
+                disabled={isLocked}
+                required
+              >
+                <option value="Admin" className="dark:bg-gray-900">Standard Admin</option>
+                <option value="Super Admin" className="dark:bg-gray-900">Super Admin</option>
+                <option value="Moderator" className="dark:bg-gray-900">Moderator</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 py-2 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded border border-gray-200 dark:border-gray-700 transition-all duration-200"
+            disabled={isLocked}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleFormSubmit}
+            className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-medium rounded shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLocked}
+          >
+            {isLocked ? "Saving..." : adminData ? "Update" : "Create"}
+          </button>
         </div>
       </div>
     </div>

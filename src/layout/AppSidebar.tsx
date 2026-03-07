@@ -22,14 +22,13 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    name: "Ecommerce",
+    path: "/",
   },
-
   {
-    name: "Tables",
     icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+    name: "Admin Tables",
+    path: "/Admin-tables",
   },
 
   {
@@ -38,6 +37,11 @@ const navItems: NavItem[] = [
     subItems: [{ name: "Admin Tables", path: "/Admin-tables", pro: false }],
   },
 
+  {
+    name: "Donations",
+    icon: <TableIcon />,
+    subItems: [{ name: "Donations", path: "/Donations-Tables", pro: false }],
+  },
   {
     name: "Users",
     icon: <UsersIcon />,

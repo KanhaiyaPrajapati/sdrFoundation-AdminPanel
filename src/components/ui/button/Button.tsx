@@ -1,14 +1,12 @@
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 
-interface ButtonProps {
-  children: ReactNode; // Button text or content
-  size?: "sm" | "md"; // Button size
-  variant?: "primary" | "outline"; // Button variant
-  startIcon?: ReactNode; // Icon before the text
-  endIcon?: ReactNode; // Icon after the text
-  onClick?: () => void; // Click handler
-  disabled?: boolean; // Disabled state
-  className?: string; // Disabled state
+interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: ReactNode;
+  size?: "sm" | "md";
+  variant?: "primary" | "outline";
+  startIcon?: ReactNode;
+  endIcon?: ReactNode;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -17,14 +15,15 @@ const Button: React.FC<ButtonProps> = ({
   variant = "primary",
   startIcon,
   endIcon,
-  onClick,
   className = "",
   disabled = false,
+  type = "button", // ✅ default button type
+  ...rest // ✅ allows onClick, submit, etc
 }) => {
   // Size Classes
   const sizeClasses = {
-    sm: "px-4 py-3 text-sm",
-    md: "px-5 py-3.5 text-sm",
+    sm: "px-4 py-2 text-sm",
+    md: "px-5 py-3 text-sm",
   };
 
   // Variant Classes
@@ -37,13 +36,14 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-lg transition ${className} ${
-        sizeClasses[size]
-      } ${variantClasses[variant]} ${
-        disabled ? "cursor-not-allowed opacity-50" : ""
-      }`}
-      onClick={onClick}
+      type={type} // ✅ now supports submit/reset/button
       disabled={disabled}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg transition 
+      ${sizeClasses[size]} 
+      ${variantClasses[variant]} 
+      ${disabled ? "cursor-not-allowed opacity-50" : ""} 
+      ${className}`}
+      {...rest}
     >
       {startIcon && <span className="flex items-center">{startIcon}</span>}
       {children}

@@ -30,7 +30,7 @@ const AdminTable: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const itemsPerPage = 6;
+  const itemsPerPage = 4;
 
   const showAlert = useCallback((alertData: { type: "success" | "error"; message: string }) => {
     setAlert(alertData);
@@ -54,7 +54,6 @@ const AdminTable: React.FC = () => {
     fetchAdmins();
   }, [fetchAdmins]);
 
-  // Search Logic
   const filteredAdmins = useMemo(() => {
     const safeAdmins = Array.isArray(admins) ? admins : [];
     if (!searchTerm.trim()) return safeAdmins;
@@ -65,7 +64,6 @@ const AdminTable: React.FC = () => {
     );
   }, [admins, searchTerm]);
 
-  // Pagination Logic
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(filteredAdmins.length / itemsPerPage));
   }, [filteredAdmins.length, itemsPerPage]);
@@ -126,7 +124,7 @@ const AdminTable: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="py-20 text-center">
+      <div className="py-20 flex justify-center items-center bg-white dark:bg-gray-900 min-h-[400px]">
         <Loader />
       </div>
     );
@@ -134,54 +132,71 @@ const AdminTable: React.FC = () => {
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-800">
-        {/* Header with Search and Add Button */}
-        <div className="flex flex-col sm:flex-row justify-between items-center px-4 sm:px-5 py-4 gap-3 border-b border-gray-100 dark:border-gray-700">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700/60 dark:bg-gray-900 transition-colors duration-200">
+        <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-5 gap-4 border-b border-gray-100 dark:border-gray-800">
           <button
             onClick={() => openModal("create")}
-            className="inline-flex items-center justify-center p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 w-full sm:w-auto transition-colors rounded-lg border border-blue-100 dark:border-gray-600"
+            className="flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all rounded-lg shadow-md hover:shadow-lg w-full sm:w-auto active:scale-95"
           >
-            <Plus size={20} className="mr-1" /> <span className="text-sm font-medium"></span>
+            <Plus size={18} className="mr-2" />
+            Add Admin
           </button>
-          <div className="w-full sm:w-auto">
+          <div className="w-full sm:w-80">
             <SearchBar value={searchTerm} onChange={handleSearchChange} />
           </div>
         </div>
 
-        {/* Table Content */}
         <div className="w-full overflow-x-auto">
-          <Table className="w-full">
-            <TableHeader className="bg-gray-50/50 dark:bg-gray-900/20">
+          <Table className="w-full border-collapse">
+            <TableHeader className="bg-gray-50 dark:bg-gray-800/40">
               <TableRow>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">User</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Email</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Role</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-end text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Actions</TableCell>
+                <TableCell isHeader className="px-6 py-4 text-start text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">User</TableCell>
+                <TableCell isHeader className="px-6 py-4 text-start text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Email</TableCell>
+                <TableCell isHeader className="px-6 py-4 text-start text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Role</TableCell>
+                <TableCell isHeader className="px-6 py-4 text-end text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Actions</TableCell>
               </TableRow>
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
               {paginatedAdmins.length > 0 ? (
                 paginatedAdmins.map((admin) => (
-                  <TableRow key={admin.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <TableCell className="px-5 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                  <TableRow key={admin.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                    <TableCell className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
                       {admin.name}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
+                    <TableCell className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                       {admin.email}
                     </TableCell>
-                    <TableCell className="px-5 py-4">
-                      <Badge color="info" size="sm">{admin.role}</Badge>
+                    <TableCell className="px-6 py-4">
+                      <Badge 
+                        color="info" 
+                        size="sm" 
+                        className="font-bold capitalize px-3 py-1"
+                      >
+                        {admin.role}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-end">
-                      <div className="flex justify-end gap-1">
-                        <button onClick={() => openModal("view", admin)} className="rounded-full p-1.5 text-blue-500 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10">
+                    <TableCell className="px-6 py-4 text-end">
+                      <div className="flex justify-end gap-1.5">
+                        <button 
+                          onClick={() => openModal("view", admin)} 
+                          className="rounded-lg p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-all"
+                          title="View Details"
+                        >
                           <Eye size={18} />
                         </button>
-                        <button onClick={() => openModal("edit", admin)} className="rounded-full p-1.5 text-amber-500 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10">
+                        <button 
+                          onClick={() => openModal("edit", admin)} 
+                          className="rounded-lg p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:text-gray-400 dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-all"
+                          title="Edit Admin"
+                        >
                           <Edit size={18} />
                         </button>
-                        <button onClick={() => { setSelectedAdmin(admin); setIsDeleteModalOpen(true); }} className="rounded-full p-1.5 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10">
+                        <button 
+                          onClick={() => { setSelectedAdmin(admin); setIsDeleteModalOpen(true); }} 
+                          className="rounded-lg p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-all"
+                          title="Delete Admin"
+                        >
                           <Trash2 size={18} />
                         </button>
                       </div>
@@ -190,8 +205,11 @@ const AdminTable: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
-                    No admins found {searchTerm ? `for "${searchTerm}"` : ""}
+                  <TableCell className="px-6 py-16 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
+                    <div className="flex flex-col items-center">
+                      <p className="text-base font-medium">No results found</p>
+                      <p className="text-sm opacity-70">Try adjusting your search terms</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -199,9 +217,8 @@ const AdminTable: React.FC = () => {
           </Table>
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="border-t border-gray-100 px-4 py-3 dark:border-gray-800">
+          <div className="border-t border-gray-100 px-6 py-4 dark:border-gray-800 bg-gray-50/20 dark:bg-gray-900/50">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -211,9 +228,8 @@ const AdminTable: React.FC = () => {
         )}
       </div>
 
-      {/* View/Create/Edit Modals */}
-      <Modal isOpen={isModalOpen} onClose={closeModal} className={mode === 'view' ? "max-w-lg w-[90vw]" : "w-[90vw] md:w-[50vw] max-w-2xl"}>
-        <div className="bg-white dark:bg-[#1F2937] rounded-xl overflow-hidden">
+      <Modal isOpen={isModalOpen} onClose={closeModal} className={mode === 'view' ? "max-w-lg w-[90vw]" : "w-[100vw] md:w-[90vw] max-w-3xl"}>
+        <div className="bg-white dark:bg-gray-900 shadow-2xl rounded-2xl overflow-hidden">
           {mode === "view" && selectedAdmin ? (
             <AdminDetails admin={selectedAdmin} onClose={closeModal} />
           ) : (
@@ -226,28 +242,30 @@ const AdminTable: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && selectedAdmin && (
         <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} className="max-w-md w-[95vw] mx-auto">
-          <div className="rounded-3xl bg-white p-6 dark:bg-[#1F2937]">
+          <div className="bg-white p-8 dark:bg-gray-900 border dark:border-gray-800 rounded-2xl shadow-2xl">
             <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20 animate-pulse">
+                <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-500" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-[#4FE7C0]">Delete Admin</h3>
-              <p className="mb-6 text-sm text-gray-600 dark:text-gray-300">
-                Are you sure you want to delete <span className="font-medium text-gray-900 dark:text-white">"{selectedAdmin.name}"</span>?
+              <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">Delete Admin</h3>
+              <p className="mb-8 text-gray-600 dark:text-gray-400 leading-relaxed">
+                Are you sure you want to remove <span className="font-bold text-gray-900 dark:text-gray-100 underline decoration-red-500/30">"{selectedAdmin.name}"</span>? This action is permanent.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row justify-center">
-              <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} className="sm:w-32">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsDeleteModalOpen(false)} 
+                className="w-full sm:w-32 order-2 sm:order-1 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
                 Cancel
               </Button>
-              {/* FIXED: Changed to variant="primary" to satisfy types, used className for the red color */}
               <Button 
                 variant="primary" 
                 onClick={confirmDelete} 
-                className="sm:w-32 bg-red-600 hover:bg-red-700 text-white border-none"
+                className="w-full sm:w-32 bg-red-600 hover:bg-red-700 text-white border-none shadow-lg shadow-red-200 dark:shadow-none order-1 sm:order-2 transition-transform active:scale-95"
               >
                 Delete
               </Button>
@@ -256,9 +274,8 @@ const AdminTable: React.FC = () => {
         </Modal>
       )}
 
-      {/* Alert System */}
       {alert && (
-        <div className="fixed bottom-5 right-2 z-50 w-[calc(100vw-1rem)] max-w-sm sm:w-72">
+        <div className="fixed bottom-8 right-8 z-[100] w-[calc(100vw-4rem)] max-w-sm drop-shadow-2xl">
           <Alert variant={alert.type} title={alert.type === "success" ? "Success" : "Error"} message={alert.message} />
         </div>
       )}
