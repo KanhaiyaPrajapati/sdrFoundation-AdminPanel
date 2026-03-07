@@ -37,24 +37,31 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-center my-3">
-      <div className="flex flex-wrap items-center gap-2 text-sm max-w-full">
-        {/* Prev Button */}
+    <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+      <p className="text-sm text-gray-500 dark:text-gray-400 order-2 sm:order-1">
+        Page {currentPage} of {totalPages}
+      </p>
+      <div className="flex items-center justify-center gap-2 order-1 sm:order-2">
         <button
           onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
-          className="w-7 h-7 flex items-center justify-center rounded-full dark:text-white border border-gray-300 dark:border-white/20 disabled:opacity-30 hover:bg-gray-100 dark:hover:bg-white/10"
+          className="w-8 h-8 flex items-center justify-center rounded-lg
+            border border-gray-200 dark:border-gray-700
+            text-gray-600 dark:text-gray-400
+            hover:bg-teal-50 hover:text-teal-600
+            dark:hover:bg-teal-900/20 dark:hover:text-teal-400
+            disabled:opacity-50 disabled:cursor-not-allowed
+            transition-all duration-200"
           disabled={currentPage === 1}
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft size={18} />
         </button>
 
-        {/* Page Numbers */}
         {getPageNumbers().map((item, index) => {
           if (item === "...") {
             return (
               <span
-                key={index}
-                className="px-2 py-1 text-gray-500 dark:text-gray-400"
+                key={`ellipsis-${index}`}
+                className="w-8 h-8 flex items-center justify-center text-gray-500 dark:text-gray-400"
               >
                 ...
               </span>
@@ -65,28 +72,31 @@ const Pagination: React.FC<PaginationProps> = ({
 
           return (
             <button
-              key={index}
+              key={`page-${item}`}
               onClick={() => onPageChange(item as number)}
-              className={`w-7 h-7 flex items-center justify-center rounded-full border text-sm transition ${
-                active
-                  ? "bg-brand-500 text-white dark:bg-white dark:text-black"
-                  : "border-gray-300 dark:border-white/20 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
-              }`}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200
+                ${active
+                  ? "bg-teal-600 text-white shadow-md hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600"
+                  : "border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-teal-50 hover:text-teal-600 dark:hover:bg-teal-900/20 dark:hover:text-teal-400"
+                }`}
             >
               {item}
             </button>
           );
         })}
 
-        {/* Next Button */}
         <button
-          onClick={() =>
-            currentPage < totalPages && onPageChange(currentPage + 1)
-          }
-          className="w-7 h-7 flex items-center justify-center rounded-full dark:text-white border border-gray-300 dark:border-white/20 disabled:opacity-30 hover:bg-gray-100 dark:hover:bg-white/10"
+          onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
+          className="w-8 h-8 flex items-center justify-center rounded-lg
+            border border-gray-200 dark:border-gray-700
+            text-gray-600 dark:text-gray-400
+            hover:bg-teal-50 hover:text-teal-600
+            dark:hover:bg-teal-900/20 dark:hover:text-teal-400
+            disabled:opacity-50 disabled:cursor-not-allowed
+            transition-all duration-200"
           disabled={currentPage === totalPages}
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={18} />
         </button>
       </div>
     </div>
