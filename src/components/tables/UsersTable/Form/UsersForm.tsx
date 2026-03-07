@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+
+import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import {
@@ -39,30 +40,6 @@ const UserForm: React.FC<UserFormProps> = ({
   onCancel,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const formRef = useRef<HTMLDivElement>(null);
-
-  // Handle click outside and escape key
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (formRef.current && !formRef.current.contains(event.target as Node)) {
-        onCancel();
-      }
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onCancel();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [onCancel]);
 
   const formik = useFormik({
     initialValues: initialData,
@@ -72,7 +49,7 @@ const UserForm: React.FC<UserFormProps> = ({
       try {
         await onSubmit(values);
       } finally {
-        setTimeout(() => setIsSubmitting(false), 500);
+        setIsSubmitting(false);
       }
     },
     enableReinitialize: true,
@@ -89,10 +66,7 @@ const UserForm: React.FC<UserFormProps> = ({
   const userTypes = ["newcomer", "senior", "volunteer"];
 
   return (
-    <div
-      ref={formRef}
-      className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden"
-    >
+    <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
       {/* Elegant top bar */}
       <div className="h-1 w-full bg-linear-to-r from-amber-500 via-orange-500 to-emerald-500" />
 
@@ -127,7 +101,7 @@ const UserForm: React.FC<UserFormProps> = ({
         </div>
       </div>
 
-      {/* Form Content – exactly as ServiceForm */}
+      {/* Form Content */}
       <div className="p-4 space-y-2 bg-gray-50 dark:bg-gray-900">
         {/* Full Name */}
         <div className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
@@ -237,11 +211,18 @@ const UserForm: React.FC<UserFormProps> = ({
               className="w-full text-xs bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none py-0.5 text-gray-800 dark:text-white"
               disabled={isSubmitting}
             >
-              <option value="" className="bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-400">
+              <option
+                value=""
+                className="bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-400"
+              >
                 Select a role
               </option>
               {userTypes.map((type) => (
-                <option key={type} value={type} className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white">
+                <option
+                  key={type}
+                  value={type}
+                  className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white"
+                >
                   {type.charAt(0).toUpperCase() + type.slice(1)}
                 </option>
               ))}
@@ -284,17 +265,19 @@ const UserForm: React.FC<UserFormProps> = ({
                     formik.values.status === "active" ? "inactive" : "active"
                   )
                 }
-                className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${formik.values.status === "active"
+                className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${
+                  formik.values.status === "active"
                     ? "bg-emerald-500"
                     : "bg-gray-300 dark:bg-gray-600"
-                  }`}
+                }`}
                 disabled={isSubmitting}
               >
                 <span
-                  className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform ${formik.values.status === "active"
+                  className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform ${
+                    formik.values.status === "active"
                       ? "translate-x-4"
                       : "translate-x-0.5"
-                    }`}
+                  }`}
                 />
               </button>
             </div>
@@ -323,7 +306,7 @@ const UserForm: React.FC<UserFormProps> = ({
           className="px-3 py-1.5 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-medium rounded shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Saving..." : (mode === "create" ? "Create" : "Update")}
+          {isSubmitting ? "Saving..." : mode === "create" ? "Create" : "Update"}
         </button>
       </div>
     </div>

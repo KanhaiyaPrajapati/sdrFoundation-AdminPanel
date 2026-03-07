@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -20,12 +20,12 @@ import {
 import { User } from "../../../store/types/Users.types";
 import UserForm from "./Form/UsersForm";
 import UserDetails from "./Details/UsersDetail";
+import { Modal } from "../../ui/modal"; 
 
 const truncateText = (text?: string, limit: number = 20) => {
   if (!text) return "";
   return text.length > limit ? text.slice(0, limit) + "..." : text;
 };
-
 
 const UserTableOne: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -34,7 +34,9 @@ const UserTableOne: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [mode, setMode] = useState<"create" | "edit" | "view">("create");
-  const [initialFormData, setInitialFormData] = useState<Omit<User, "id" | "created_at">>({
+  const [initialFormData, setInitialFormData] = useState<
+    Omit<User, "id" | "created_at">
+  >({
     full_name: "",
     email: "",
     phone: "",
@@ -50,12 +52,12 @@ const UserTableOne: React.FC = () => {
   const itemsPerPage = 5;
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Refs for custom modal backdrop click handling
-  const modalRef = useRef<HTMLDivElement>(null);
-  const deleteModalRef = useRef<HTMLDivElement>(null);
-
   const showAlert = useCallback(
-    (alertData: { type: "success" | "error" | "warning" | "info"; title: string; message: string }) => {
+    (alertData: {
+      type: "success" | "error" | "warning" | "info";
+      title: string;
+      message: string;
+    }) => {
       setAlert(alertData);
       setTimeout(() => setAlert(null), 3000);
     },
@@ -87,7 +89,7 @@ const UserTableOne: React.FC = () => {
 
       const sanitizedUsers = usersArray
         .map((user) => ({
-          id: typeof user.id === 'number' ? user.id : Number(user.id),
+          id: typeof user.id === "number" ? user.id : Number(user.id),
           full_name: user.full_name ?? "",
           email: user.email ?? "",
           phone: user.phone ?? "",
@@ -145,17 +147,17 @@ const UserTableOne: React.FC = () => {
   }, []);
 
   const extractUserFromResponse = (response: unknown): User | null => {
-    if (!response || typeof response !== 'object') return null;
+    if (!response || typeof response !== "object") return null;
 
     const isUserObject = (obj: unknown): obj is Record<string, unknown> => {
-      return obj !== null && typeof obj === 'object' && 'id' in obj;
+      return obj !== null && typeof obj === "object" && "id" in obj;
     };
 
     let candidate: unknown = response;
 
-    if ('user' in response) {
+    if ("user" in response) {
       candidate = (response as { user: unknown }).user;
-    } else if ('data' in response) {
+    } else if ("data" in response) {
       candidate = (response as { data: unknown }).data;
     }
 
@@ -163,18 +165,20 @@ const UserTableOne: React.FC = () => {
 
     const id = Number(candidate.id);
     if (isNaN(id)) {
-      console.error('Invalid id received from API:', candidate.id);
+      console.error("Invalid id received from API:", candidate.id);
       return null;
     }
 
     return {
       id,
-      full_name: candidate.full_name ? String(candidate.full_name) : '',
-      email: candidate.email ? String(candidate.email) : '',
-      phone: candidate.phone ? String(candidate.phone) : '',
-      user_type: candidate.user_type ? String(candidate.user_type) : '',
-      status: candidate.status ? String(candidate.status) : 'active',
-      created_at: candidate.created_at ? String(candidate.created_at) : new Date().toISOString(),
+      full_name: candidate.full_name ? String(candidate.full_name) : "",
+      email: candidate.email ? String(candidate.email) : "",
+      phone: candidate.phone ? String(candidate.phone) : "",
+      user_type: candidate.user_type ? String(candidate.user_type) : "",
+      status: candidate.status ? String(candidate.status) : "active",
+      created_at: candidate.created_at
+        ? String(candidate.created_at)
+        : new Date().toISOString(),
     };
   };
 
@@ -187,7 +191,11 @@ const UserTableOne: React.FC = () => {
           if (!newUser) {
             throw new Error("Invalid response from server: missing user data");
           }
-          showAlert({ type: "success", title: "Success!", message: "User added successfully" });
+          showAlert({
+            type: "success",
+            title: "Success!",
+            message: "User added successfully",
+          });
           setUsers((prev) => [...prev, newUser]);
         } else if (mode === "edit" && currentUser?.id) {
           const response = await updateUser(currentUser.id, values);
@@ -198,18 +206,18 @@ const UserTableOne: React.FC = () => {
               ...values,
             };
             setUsers((prev) =>
-              prev.map((user) =>
-                user.id === currentUser.id ? patchedUser : user
-              )
+              prev.map((user) => (user.id === currentUser.id ? patchedUser : user))
             );
           } else {
             setUsers((prev) =>
-              prev.map((user) =>
-                user.id === currentUser.id ? updatedUser : user
-              )
+              prev.map((user) => (user.id === currentUser.id ? updatedUser : user))
             );
           }
-          showAlert({ type: "success", title: "Success!", message: "User updated successfully" });
+          showAlert({
+            type: "success",
+            title: "Success!",
+            message: "User updated successfully",
+          });
         }
         closeModal();
       } catch (error) {
@@ -234,7 +242,11 @@ const UserTableOne: React.FC = () => {
     if (!currentUser?.id) return;
     try {
       await deleteUser(currentUser.id);
-      showAlert({ type: "success", title: "Success!", message: "User deleted successfully" });
+      showAlert({
+        type: "success",
+        title: "Success!",
+        message: "User deleted successfully",
+      });
       setUsers((prev) => {
         const newUsers = prev.filter((user) => user.id !== currentUser.id);
         const filteredAfterDelete = newUsers.filter(
@@ -281,9 +293,10 @@ const UserTableOne: React.FC = () => {
     return filterUsers(safeUsers);
   }, [users, filterUsers]);
 
-  const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
-  }, [filteredUsers.length, itemsPerPage]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage)),
+    [filteredUsers.length, itemsPerPage]
+  );
 
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -305,7 +318,9 @@ const UserTableOne: React.FC = () => {
     }
   }, [totalPages, currentPage]);
 
-  const getStatusColor = (status: string): "success" | "error" | "warning" | "info" => {
+  const getStatusColor = (
+    status: string
+  ): "success" | "error" | "warning" | "info" => {
     switch (status.toLowerCase()) {
       case "active":
         return "success";
@@ -318,48 +333,22 @@ const UserTableOne: React.FC = () => {
     }
   };
 
-  // Custom modal handlers for click outside and escape
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isModalOpen && modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        closeModal();
-      }
-      if (isDeleteModalOpen && deleteModalRef.current && !deleteModalRef.current.contains(event.target as Node)) {
-        setIsDeleteModalOpen(false);
-        setCurrentUser(null);
-      }
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (isModalOpen) closeModal();
-        if (isDeleteModalOpen) {
-          setIsDeleteModalOpen(false);
-          setCurrentUser(null);
-        }
-      }
-    };
-
-    if (isModalOpen || isDeleteModalOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
-  }, [isModalOpen, isDeleteModalOpen, closeModal]);
-
   if (loading) {
     return (
       <div className="py-10 text-center text-gray-900 dark:text-white">
         <div className="flex justify-center items-center space-x-2">
-          <div className="w-4 h-4 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-4 h-4 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-4 h-4 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          <div
+            className="w-4 h-4 bg-amber-500 rounded-full animate-bounce"
+            style={{ animationDelay: "0s" }}
+          ></div>
+          <div
+            className="w-4 h-4 bg-emerald-500 rounded-full animate-bounce"
+            style={{ animationDelay: "0.2s" }}
+          ></div>
+          <div
+            className="w-4 h-4 bg-orange-500 rounded-full animate-bounce"
+            style={{ animationDelay: "0.4s" }}
+          ></div>
         </div>
         <p className="mt-2 text-gray-600 dark:text-gray-400">Loading users...</p>
       </div>
@@ -377,7 +366,11 @@ const UserTableOne: React.FC = () => {
           >
             <Plus size={20} />
           </button>
-          <SearchBar value={searchTerm} onChange={handleSearchChange} placeholder="Search users..." />
+          <SearchBar
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Search users..."
+          />
         </div>
 
         <div className="max-w-full overflow-x-auto">
@@ -425,7 +418,10 @@ const UserTableOne: React.FC = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
               {paginatedUsers.length > 0 ? (
                 paginatedUsers.map((user, index) => (
-                  <TableRow key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <TableRow
+                    key={user.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  >
                     <TableCell className="px-5 py-4 sm:px-6 text-start whitespace-nowrap">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {(currentPage - 1) * itemsPerPage + index + 1}
@@ -447,10 +443,7 @@ const UserTableOne: React.FC = () => {
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start whitespace-nowrap">
-                      <Badge
-                        size="sm"
-                        color={getStatusColor(user.status)}
-                      >
+                      <Badge size="sm" color={getStatusColor(user.status)}>
                         {user.status}
                       </Badge>
                     </TableCell>
@@ -483,12 +476,16 @@ const UserTableOne: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  {/* Replace TableCell with a standard <td> to avoid colSpan type error */}
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td
+                    colSpan={6}
+                    className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                  >
                     <div className="flex flex-col items-center justify-center gap-2">
                       <p className="text-lg font-medium">No users found</p>
                       <p className="text-sm text-gray-400">
-                        {searchTerm ? `No results for "${searchTerm}"` : "Click + to create one"}
+                        {searchTerm
+                          ? `No results for "${searchTerm}"`
+                          : "Click + to create one"}
                       </p>
                       {!searchTerm && (
                         <button
@@ -518,60 +515,63 @@ const UserTableOne: React.FC = () => {
         )}
       </div>
 
-      {/* Custom Modal for Create/Edit/View – theme‑aware backdrop */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/70 dark:bg-black/70 overflow-y-auto">
-          <div ref={modalRef} className="w-full max-w-md">
-            {mode === "view" && currentUser && (
-              <UserDetails user={currentUser} onClose={closeModal} />
-            )}
-            {(mode === "create" || mode === "edit") && (
-              <UserForm
-                mode={mode}
-                initialData={initialFormData}
-                onSubmit={handleFormSubmit}
-                onCancel={closeModal}
-              />
-            )}
-          </div>
-        </div>
-      )}
+      {/* Main Modal (Create / Edit / View) */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        className="w-full max-w-md bg-transparent"
+      >
+        {mode === "view" && currentUser && (
+          <UserDetails user={currentUser} onClose={closeModal} />
+        )}
+        {(mode === "create" || mode === "edit") && (
+          <UserForm
+            mode={mode}
+            initialData={initialFormData}
+            onSubmit={handleFormSubmit}
+            onCancel={closeModal}
+          />
+        )}
+      </Modal>
 
-      {/* Custom Delete Modal – theme‑aware backdrop */}
-      {isDeleteModalOpen && currentUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/70 dark:bg-black/70 overflow-y-auto">
-          <div ref={deleteModalRef} className="w-full max-w-md">
-            <div className="bg-white dark:bg-[#1F2937] rounded-xl p-6">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-center">
-                Delete User
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 text-center">
-                Are you sure you want to delete{" "}
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {currentUser.full_name}
-                </span>? This action cannot be undone.
-              </p>
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={() => setIsDeleteModalOpen(false)}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm"
-                >
-                  Delete
-                </button>
-              </div>
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        className="w-full max-w-md bg-transparent"
+      >
+        {currentUser && (
+          <div className="bg-white dark:bg-[#1F2937] rounded-xl p-6">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+              <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-center">
+              Delete User
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 text-center">
+              Are you sure you want to delete{" "}
+              <span className="font-medium text-gray-900 dark:text-white">
+                {currentUser.full_name}
+              </span>
+              ? This action cannot be undone.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm"
+              >
+                Delete
+              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Alert Popup */}
       {alert && (
@@ -588,5 +588,3 @@ const UserTableOne: React.FC = () => {
 };
 
 export default UserTableOne;
-
-

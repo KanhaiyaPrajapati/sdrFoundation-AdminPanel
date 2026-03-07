@@ -1,49 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Button from "../ui/button/Button";
-import axios, { AxiosError } from "axios";
-
-// ---------- Admin Service (inline) ----------
-export interface Admin {
-  id?: number;
-  name: string;
-  email: string;
-  role: string;
-  password?: string;
-}
-
-export interface LoginResponse {
-  message: string;
-  user: Admin;
-  token?: string; // if your API returns a token
-}
-
-const api = axios.create({
-  baseURL: "http://192.168.1.20:5000/api/admins",
-  headers: { "Content-Type": "application/json" },
-});
-
-const handleApiError = (error: unknown, action: string): never => {
-  const err = error as AxiosError<{ message?: string }>;
-  const message = err.response?.data?.message || err.message || "Server error";
-  console.error(`❌ Admin API error while ${action}:`, message);
-  throw new Error(message);
-};
-
-const adminService = {
-  async login(email: string, password: string): Promise<LoginResponse> {
-    try {
-      const res = await api.post("/login", { email, password });
-      return res.data;
-    } catch (error) {
-      return handleApiError(error, "logging in");
-    }
-  },
-};
-// --------------------------------------------
+import { useAuth } from "../../context/AuthContext";
+import { authApi } from "../../store/api/Auth-api";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -53,6 +15,13 @@ export default function SignInForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,11 +35,16 @@ export default function SignInForm() {
 
     setLoading(true);
     try {
-      const response = await adminService.login(email, password);
+      const response = await authApi.login(email, password);
       setSuccess(response.message || "Login successful! Redirecting...");
 
-      // Redirect to the admin table page after a short delay
-      setTimeout(() => navigate("/Admin-Tables"), 1500);
+      if (response.token) {
+        login(response.token, response.user);
+      } else {
+        login("dummy-token", response.user);
+      }
+
+      setTimeout(() => navigate("/"), 1500);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Login failed";
       setError(errorMessage);
@@ -113,7 +87,6 @@ export default function SignInForm() {
                 </div>
               )}
               <div className="space-y-6">
-                {/* Email */}
                 <div>
                   <Label>
                     Email <span className="text-error-500">*</span>
@@ -125,7 +98,6 @@ export default function SignInForm() {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {/* Password */}
                 <div>
                   <Label>
                     Password <span className="text-error-500">*</span>
@@ -150,7 +122,6 @@ export default function SignInForm() {
                   </div>
                 </div>
 
-                {/* Forgot Password Link */}
                 <div className="flex justify-end">
                   <Link
                     to="/forgot-password"
